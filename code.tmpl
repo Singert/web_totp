@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>验证码</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      padding-top: 50px;
+      margin: 0;
+    }
+    .code {
+      font-size: 3em;
+      margin: 20px 0;
+    }
+    .countdown {
+      font-size: 1.2em;
+    }
+    a {
+      display: inline-block;
+      margin-top: 20px;
+      font-size: 1.1em;
+      color: purple;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 90%;
+        padding: 30px 10px;
+      }
+      .code {
+        font-size: 2.2em;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h2><strong>当前验证码：</strong></h2>
+  <div class="code" id="code">{{ .Code }}</div>
+  <p class="countdown">将在 <b id="remain">{{ .Remain }}</b> 秒后过期</p>
+  <a href="/">返回</a>
+
+  <script>
+    const key = new URLSearchParams(window.location.search).get('key');
+    if (key) sessionStorage.setItem('totp_key', key);
+
+    const storedKey = sessionStorage.getItem('totp_key');
+    if (!storedKey) {
+      alert('未授权访问，请重新登录');
+      window.location.href = '/';
+    }
+
+    let remain = parseInt(document.getElementById("remain").textContent);
+    const remainSpan = document.getElementById("remain");
+    const codeSpan = document.getElementById("code");
+
+    function fetchCode() {
+      fetch(`/code/auto?key=${encodeURIComponent(storedKey)}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.code) {
+            codeSpan.textContent = data.code;
+            remain = data.remain;
+          } else {
+            alert('认证失败，请重新输入 key');
+            sessionStorage.removeItem('totp_key');
+            window.location.href = '/';
+          }
+        });
+    }
+
+    setInterval(() => {
+      remain--;
+      if (remain <= 0) {
+        fetchCode();
+      } else {
+        remainSpan.textContent = remain;
+      }
+    }, 1000);
+  </script>
+</body>
+</html>

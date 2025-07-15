@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head><title>登录验证</title></head>
+<body style="text-align:center;margin-top:50px;font-family:sans-serif">
+  <h2>请输入访问密钥：</h2>
+  <form method="POST" action="/">
+    <input name="key" type="text" style="padding:8px;font-size:1em">
+    <button type="submit" style="padding:8px 16px;font-size:1em">提交</button>
+  </form>
+  {{ if .Error }}
+    <p style="color:red">{{ .Error }}</p>
+  {{ end }}
+</body>
+</html>

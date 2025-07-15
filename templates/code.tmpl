@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>验证码查看</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      background-color: #f2f5f9;
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      color: #333;
+      text-align: center;
+      padding: 2rem;
+    }
+
+    h2 {
+      font-size: 1.8em;
+      font-weight: bold;
+      margin-bottom: 1rem;
+    }
+
+    .code {
+      font-size: 3.5em;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      background: #ffffff;
+      display: inline-block;
+      padding: 0.4em 0.8em;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+      margin-bottom: 1rem;
+    }
+
+    .countdown {
+      font-size: 1.2em;
+      margin-top: 0.4rem;
+    }
+
+    #remain {
+      font-weight: bold;
+      color: #007aff;
+      transition: all 0.3s ease;
+    }
+
+    a {
+      display: inline-block;
+      margin-top: 1.5rem;
+      color: #6a1b9a;
+      font-size: 1.1em;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 600px) {
+      .code {
+        font-size: 2.5em;
+      }
+
+      body {
+        padding: 1.2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h2>当前验证码：</h2>
+  <div class="code" id="code">{{ .Code }}</div>
+  <p class="countdown">将在 <span id="remain">{{ .Remain }}</span> 秒后过期</p>
+  <a href="/">返回</a>
+
+  <script>
+    const key = new URLSearchParams(window.location.search).get('key');
+    if (key) sessionStorage.setItem('totp_key', key);
+
+    const storedKey = sessionStorage.getItem('totp_key');
+    if (!storedKey) {
+      alert('未授权访问，请重新登录');
+      window.location.href = '/';
+    }
+
+    let remain = parseInt(document.getElementById("remain").textContent);
+    const remainSpan = document.getElementById("remain");
+    const codeSpan = document.getElementById("code");
+
+    function fetchCode() {
+      fetch(`/code/auto?key=${encodeURIComponent(storedKey)}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.code) {
+            codeSpan.textContent = data.code;
+            remain = data.remain;
+            remainSpan.textContent = remain;
+          } else {
+            alert('认证失败，请重新输入 key');
+            sessionStorage.removeItem('totp_key');
+            window.location.href = '/';
+          }
+        });
+    }
+
+    setInterval(() => {
+      remain--;
+      if (remain <= 0) {
+        fetchCode();
+      } else {
+        remainSpan.textContent = remain;
+      }
+    }, 1000);
+  </script>
+</body>
+</html>
